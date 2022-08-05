@@ -70,6 +70,7 @@ def _generate_import_framework_impl(ctx):
                 apple_fragment = apple_fragment,
                 archs = architectures,
                 binary = binary,
+                label = label,
                 minimum_os_version = minimum_os_version,
                 sdk = sdk,
                 xcode_config = xcode_config,
@@ -79,6 +80,7 @@ def _generate_import_framework_impl(ctx):
                 actions = actions,
                 apple_fragment = apple_fragment,
                 binary = binary,
+                label = label,
                 xcode_config = xcode_config,
             )
 
@@ -98,23 +100,45 @@ def _generate_import_framework_impl(ctx):
             ),
         )
 
-        # Mock swiftmodule file. Imported `.swiftmodule` files are not supported due to Swift
-        # toolchain compatibility and Swift's ABI stability through `.swiftinterface` files.
-        # However, Apple framework import rules use Swift interface files to flag an imported
-        # framework contains Swift, and thus propagate Swift toolchain specific flags up the
-        # build graph.
+        # Apple framework and XCFrameworks import rules use Swift interface files to flag an
+        # imported framework contains Swift, and thus propagate Swift toolchain specific flags up
+        # the build graph.
         if include_module_interface_files:
-            module_interface = actions.declare_file(architectures[0] + ".swiftmodule")
-            actions.write(output = module_interface, content = "I'm a mock .swiftmodule file")
-            module_interfaces.append(module_interface)
+            swiftinterface = generation_support.get_file_with_extension(
+                files = swift_library_files,
+                extension = "swiftinterface",
+            )
+            if swiftinterface:
+                module_interfaces.append(
+                    generation_support.copy_file(
+                        actions = actions,
+                        file = swiftinterface,
+                        label = label,
+                        target_filename = "%s.swiftinterface" % architectures[0],
+                    ),
+                )
+            else:
+                swiftmodule = generation_support.get_file_with_extension(
+                    files = swift_library_files,
+                    extension = "swiftmodule",
+                )
+                module_interfaces.append(
+                    generation_support.copy_file(
+                        actions = actions,
+                        file = swiftmodule,
+                        label = label,
+                        target_filename = "%s.swiftmodule" % architectures[0],
+                    ),
+                )
 
     # Create framework bundle
     framework_files = generation_support.create_framework(
         actions = actions,
         bundle_name = label.name,
-        library = library,
         headers = headers,
         include_resource_bundle = include_resource_bundle,
+        label = label,
+        library = library,
         module_interfaces = module_interfaces,
     )
 
@@ -163,7 +187,7 @@ Info.plist file to test resource propagation.
         ),
         "swift_library": attr.label(
             allow_files = True,
-            doc = "Label for a Swift library target to source archive and swiftmodule files from.",
+            doc = "Label for a Swift library target to source archive and module files from.",
             providers = [SwiftInfo],
         ),
         "libtype": attr.string(
