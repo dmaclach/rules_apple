@@ -30,6 +30,7 @@ _BUNDLE_ATTRS = {
         "provisioning_profile",
         "resources",
         "test_host",
+        "test_host_is_bundle_loader",
     ]
 }
 

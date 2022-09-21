@@ -691,6 +691,16 @@ Info.plist under the key `UILaunchStoryboardName`.
         if rule_descriptor.product_type == apple_product_type.ui_test_bundle:
             required_providers.append([AppleBundleInfo, IosImessageApplicationBundleInfo])
             test_host_mandatory = True
+        else:
+            attrs.append({
+                "test_host_is_bundle_loader": attr.bool(
+                    default = True,
+                    doc = """
+Whether the 'test_host' should be used as the -bundle_loader to allow testing
+the symbols from the test host app
+""",
+                ),
+            })
 
         attrs.append({
             "test_host": attr.label(

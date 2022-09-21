@@ -303,7 +303,8 @@ def _apple_test_bundle_impl(ctx):
     # loader, because the host application is loaded out-of-process.)
     if (
         rule_descriptor.product_type == apple_product_type.unit_test_bundle and
-        test_host and apple_common.AppleExecutableBinary in test_host
+        test_host and apple_common.AppleExecutableBinary in test_host and
+        getattr(ctx.attr, "test_host_is_bundle_loader", True)
     ):
         bundle_loader = test_host
     else:
