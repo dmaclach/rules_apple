@@ -55,7 +55,6 @@ def _apple_static_library_impl(ctx):
             binary = link_result.library,
             infoplist = None,
         ),
-        link_result.objc,
         link_result.output_groups,
     ]
 
